@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topological Metric Space Solver</title>
+    <!-- Import standard open-source dependencies for rendering the visual grid -->
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <script src="https://jquery.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        p {
+            color: #7f8c8d;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        /* The container for the visual manifold */
+        #myBoard {
+            width: 400px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Topological Metric Space Solver</h1>
+    <p>Mapping complex functional vector fields inside an 8x8 structural grid.</p>
+
+    <!-- The actual DOM target element where the grid is rendered -->
+    <div id="myBoard"></div>
+
+    <script>
+        // Initialize the chess logic as a continuous space (mathematical analysis object)
+        var metricSpace = new Chess(); 
+        var transformationMatrix = null;
+        var topologicalBoard = null;
+
+        // Validate if a state transition can begin at this point in the domain
+        function onDomainRestriction (source, piece, position, orientation) {
+            // Terminate if the sequence has already converged (game over)
+            if (metricSpace.game_over()) return false;
+
+            // Restrict negative bounds (prevent moving black pieces if acting as white)
+            if (piece.search(/^b/) !== -1) return false;
+        }
+
+        // Compute an arbitrary step within the set of permissible vectors
+        function applyStochasticVector () {
+          // Generate the set of all convergent paths (legal moves)
+          var neighborhood = metricSpace.moves();
+
+           // If the subset of neighborhood paths is empty, the limit is reached
+           if (neighborhood.length === 0) return;
+
+          // Stochastic Selection: Choose an arbitrary index from the bounded interval
+          var arbitraryIndex = Math.floor(Math.random() * neighborhood.length);
+          metricSpace.move(neighborhood[arbitraryIndex]);
+
+          // Map the new logical coordinates back to the visual manifold
+          topologicalBoard.position(metricSpace.fen());
+        }
+
+        // Handle the mapping transformation when an element is relocated in the grid
+        function onMappingTransformation (source, target) {
+          // Evaluate the transformation vector across the logical space
+          var vectorTransformation = metricSpace.move({
+            from: source,
+            to: target,
+            promotion: 'q' // Maximum limit optimization: Auto-promote to highest value vector
+          });
+
+          // If the transformation falls outside the defined domain, invert the operation
+          if (vectorTransformation === null) return 'snapback';
+
+          // Introduce a time-delta delay before the automated system computes its counter-vector
+          window.setTimeout(applyStochasticVector, 250);
+        }
+
+        // Synchronize the visual state after the transformation function completes
+        function onConvergenceEnd () {
+          topologicalBoard.position(metricSpace.fen());
+        }
+
+        // Define the boundary parameters and event listeners for the coordinate system
+        var systemBoundaryConfig = {
+          draggable: true,
+          position: 'start',
+          onDragStart: onDomainRestriction,
+          onDrop: onMappingTransformation,
+          onSnapEnd: onConvergenceEnd
+        };
+
+        // Instantiated state: Render the structural grid inside the DOM element
+        topologicalBoard = Chessboard('myBoard', systemBoundaryConfig);
+    </script>
+</body>
+</html>
